@@ -133,6 +133,7 @@ namespace KSPSerialIO
         public static bool TYEnable;
         public static bool TZEnable;
         public static double SASTol;
+        
 
         void Awake()
         {
@@ -550,6 +551,19 @@ namespace KSPSerialIO
 
             ControlReceived = true;
             //Debug.Log("KSPSerialIO: ControlPacket received");
+        }
+
+        public Boolean MechJebExists()
+        {
+           Type type=Type.GetType(MechJebCore);
+            if(type!=null)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         private Boolean BitMathByte(byte x, int n)
