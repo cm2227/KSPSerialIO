@@ -543,7 +543,12 @@ namespace KSPSerialIO
             VControls.TX = (float)CPacket.TX / 1000.0F;
             VControls.TY = (float)CPacket.TY / 1000.0F;
             VControls.TZ = (float)CPacket.TZ / 1000.0F;
-
+            VControls.opcode = (byte)CPacket.Opcode;
+            VControls.arg1 = (float)CPacket.arg1 / 1000.0F;
+            VControls.arg2 = (float)CPacket.arg2 / 1000.0F;
+            VControls.arg3 = (float)CPacket.arg3 / 1000.0F;
+            VControls.arg4 = (float)CPacket.arg4 / 1000.0F;
+            
             for (int j = 1; j <= 10; j++)
             {
                 VControls.ControlGroup[j] = BitMathUshort(CPacket.ControlGroup, j);
@@ -551,6 +556,11 @@ namespace KSPSerialIO
 
             ControlReceived = true;
             //Debug.Log("KSPSerialIO: ControlPacket received");
+            
+            if (MechJebExists())
+            {
+                MJControls()
+            }
         }
 
         public Boolean MechJebExists()
@@ -558,12 +568,56 @@ namespace KSPSerialIO
            Type type=Type.GetType(MechJebCore);
             if(type!=null)
             {
+
                 return true;
             }
             else
             {
                 return false;
             }
+        }
+
+        public void MJControls()
+        {
+            // First you get the "master" MJ module for a vessel :
+            MechjebCore mj = vessel.GetMasterMechJeb()   
+            //vessel will be FlightGlobals.activeVessel if you want to control the current vessel.
+
+            // Then you get the module you need 
+            MechJebModuleSmartASS sass= mj.GetComputerModules<MechJebModuleSmartASS>();
+
+           
+            
+            
+            //look at opcode
+            
+            //switch case for different opcodes
+
+            
+            //opcode 11 ascent guidonce to orbit arg1
+            
+            //opcode 12 ascent guidance to orbit arg1 inclination arg2
+            
+            //opcode 13 Ascent guidance to orbit at arg1 km with arg2° inclination with automatic staging to stage arg3
+            
+                        
+            //opcode 101 Smart A.S.S. prograde
+            sass.mode = Mode.ORBITAL;
+            sass.target = Target.PROGRADE;
+            sass.Engage();
+            
+            //opcode 102 Smart A.S.S. retrograde
+            //opcode 103 Smart A.S.S. rad+
+            //opcode 104 Smart A.S.S. rad-
+            //opcode 105 Smart A.S.S. normal
+            //opcode 106 Smart A.S.S. antinormal
+            //opcode 107 Smart A.S.S. node
+            //opcode 108 Smart A.S.S. +target
+            //opcode 109 Smart A.S.S. -target
+            
+            //and so on
+            
+            //each program writes its result to the not yet declared variable byte state
         }
 
         private Boolean BitMathByte(byte x, int n)
@@ -780,6 +834,25 @@ namespace KSPSerialIO
                     //ScreenMessages.PostScreenMessage(KSPSerialPort.VData.Fuelp.ToString());
                     //ScreenMessages.PostScreenMessage(KSPSerialPort.VData.RAlt.ToString());
                     //KSPSerialPort.Port.WriteLine("Success!");
+
+                    KSPSerialPort.VData.Atmo = (float)FlightGlobals.currentMainBody.maxAtmosphereAltitude;
+                    KSPSerialPort.VData.R=(float)FlightGlobals.currentMainBody.Radius;
+                    
+                    if (MechJebExists())
+                    {
+                        KSPSerialPort.VData.dV = (float)stats.vacStats.Sum(s => s.deltaV); //don't know if that works
+                        KSPSerialPort.VData.dVTot = 0; //get it from MechJeb somehow
+                        KSPSerialPort.VData.state = state; //Used to tell colossus wether MechJeb is active or not or wether the plugin can accept orders
+                        KSPSerialPort.VData.mjstring = MechJebModuleAscentAutopilot.status;
+                    }
+                    else
+                    {
+                        KSPSerialPort.VData.dV = 0;
+                        KSPSerialPort.VData.dVTot = 0; 
+                        KSPSerialPort.VData.state = 0;
+                        KSPSerialPort.VData.mjstring = "";
+                    }
+  
 
                     KSPSerialPort.sendPacket(KSPSerialPort.VData);
                 } //end refresh
